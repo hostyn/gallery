@@ -26,6 +26,13 @@ data class Media(
     val expires: Long,
 )
 
+/**
+ * GIFs and WebPs may move. The system thumbnail is a still frame, so the grid decodes these
+ * itself; Coil plays them if they are animated and shows them as usual if not.
+ */
+val Media.mayBeAnimated: Boolean
+    get() = mimeType == "image/gif" || mimeType == "image/webp"
+
 /** A folder with photos or videos. */
 data class Album(val id: Long, val name: String, val cover: Media, val count: Int)
 

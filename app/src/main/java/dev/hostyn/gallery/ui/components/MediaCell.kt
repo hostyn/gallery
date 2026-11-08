@@ -42,6 +42,7 @@ import coil.compose.AsyncImage
 import dev.hostyn.gallery.data.Media
 import dev.hostyn.gallery.data.Thumb
 import dev.hostyn.gallery.data.formatDuration
+import dev.hostyn.gallery.data.mayBeAnimated
 
 private val TextShadow = Shadow(Color.Black.copy(alpha = 0.6f), blurRadius = 6f)
 
@@ -81,7 +82,7 @@ fun MediaCell(
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest),
         ) {
             AsyncImage(
-                model = Thumb(media),
+                model = if (media.mayBeAnimated) media.uri else Thumb(media),
                 contentDescription = media.name,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),

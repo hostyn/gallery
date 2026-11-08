@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.coil.compose)
+    implementation(libs.coil.gif)
     implementation(libs.telephoto.zoomable.image.coil)
     implementation(libs.media3.exoplayer)
     implementation(libs.androidx.exifinterface)

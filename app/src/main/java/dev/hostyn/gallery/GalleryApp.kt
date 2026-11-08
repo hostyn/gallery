@@ -2,8 +2,11 @@ package dev.hostyn.gallery
 
 import android.app.Application
 import android.content.Context
+import android.os.Build
 import coil.ImageLoader
 import coil.ImageLoaderFactory
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
 import dev.hostyn.gallery.data.AppSettings
 import dev.hostyn.gallery.data.MediaRepository
 import dev.hostyn.gallery.data.ThumbFetcher
@@ -23,6 +26,8 @@ class GalleryApp : Application(), ImageLoaderFactory {
         .components {
             add(ThumbFetcher.Factory(this@GalleryApp))
             add(ThumbKeyer())
+            // Animated GIFs (and WebP/HEIF on Android 9+); still images go on to the default decoder.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) add(ImageDecoderDecoder.Factory()) else add(GifDecoder.Factory())
         }
         .crossfade(120)
         .build()
