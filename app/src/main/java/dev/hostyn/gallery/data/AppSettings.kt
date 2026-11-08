@@ -28,6 +28,14 @@ class AppSettings(context: Context) {
         prefs.edit().putInt("columns", columns).apply()
     }
 
+    /** Folders (bucket ids) whose photos stay out of the Photos tab. They still show in Albums. */
+    var hiddenFolders by mutableStateOf(prefs.getStringSet("hidden_folders", null).orEmpty().mapNotNullTo(HashSet()) { it.toLongOrNull() }.toSet())
+        private set
+    fun setFolderHidden(bucketId: Long, hidden: Boolean) {
+        hiddenFolders = if (hidden) hiddenFolders + bucketId else hiddenFolders - bucketId
+        prefs.edit().putStringSet("hidden_folders", hiddenFolders.mapTo(HashSet()) { it.toString() }).apply()
+    }
+
     /** Whether we already suggested skipping the system confirmations. */
     var manageMediaHintShown by mutableStateOf(prefs.getBoolean("manage_media_hint", false))
         private set

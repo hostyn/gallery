@@ -10,12 +10,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PhotoLibrary
 import androidx.compose.material.icons.rounded.Videocam
+import androidx.compose.material.icons.rounded.Visibility
+import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -30,6 +36,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,6 +60,7 @@ import dev.hostyn.gallery.ui.components.SelectionSaver
 import dev.hostyn.gallery.ui.components.SelectionTopBar
 import dev.hostyn.gallery.ui.components.StatusBarScrim
 import dev.hostyn.gallery.ui.rememberMediaActions
+import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import kotlin.math.ceil
 
@@ -106,6 +114,9 @@ fun CollectionScreen(
                     actions = {
                         if (inTrash && !items.isNullOrEmpty()) {
                             TextButton(onClick = { actions.deleteForever(items) }) { Text(stringResource(R.string.empty_trash)) }
+                        }
+                        if (collection is Collection.Folder && pick == null) {
+                            FolderMenu(collection.bucketId, snackbar)
                         }
                     },
                     scrollBehavior = scroll,
@@ -168,5 +179,33 @@ fun CollectionScreen(
             )
         }
         StatusBarScrim()
+    }
+}
+
+/** An album's menu: show or hide its photos in the Photos tab. */
+@Composable
+private fun FolderMenu(bucketId: Long, snackbar: SnackbarHostState) {
+    val context = LocalContext.current
+    val settings = GalleryApp.of(context).settings
+    val scope = rememberCoroutineScope()
+    val hidden = bucketId in settings.hiddenFolders
+    var open by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { open = true }) { Icon(Icons.Rounded.MoreVert, stringResource(R.string.more)) }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(if (hidden) R.string.show_in_photos else R.string.hide_from_photos)) },
+                leadingIcon = { Icon(if (hidden) Icons.Rounded.Visibility else Icons.Rounded.VisibilityOff, null) },
+                onClick = {
+                    open = false
+                    settings.setFolderHidden(bucketId, !hidden)
+                    val message = context.getString(if (hidden) R.string.folder_shown else R.string.folder_hidden)
+                    scope.launch {
+                        snackbar.currentSnackbarData?.dismiss()
+                        snackbar.showSnackbar(message)
+                    }
+                },
+            )
+        }
     }
 }

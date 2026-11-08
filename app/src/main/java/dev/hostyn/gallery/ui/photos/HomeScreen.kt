@@ -56,6 +56,7 @@ import dev.hostyn.gallery.GalleryApp
 import dev.hostyn.gallery.R
 import dev.hostyn.gallery.data.Collection
 import dev.hostyn.gallery.data.Media
+import dev.hostyn.gallery.data.itemsOf
 import dev.hostyn.gallery.ui.Access
 import dev.hostyn.gallery.ui.MediaActions
 import dev.hostyn.gallery.ui.PickConfig
@@ -90,6 +91,8 @@ fun HomeScreen(
     val context = LocalContext.current
     val media = rememberLibrary(pick)
     val trash by GalleryApp.of(context).repository.trash.collectAsStateWithLifecycle()
+    val hidden = GalleryApp.of(context).settings.hiddenFolders
+    val photos = remember(media, hidden) { media?.let { itemsOf(Collection.All, it, emptyList(), hidden) } }
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var selection by rememberSaveable(stateSaver = SelectionSaver) { mutableStateOf(emptySet<Long>()) }
     val snackbar = remember { SnackbarHostState() }
@@ -163,9 +166,9 @@ fun HomeScreen(
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         when {
-            media == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            media == null || photos == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             tab == 0 -> PhotosTab(
-                media = media,
+                media = photos,
                 access = access,
                 selection = selection,
                 onSelectionChange = { selection = it },
@@ -181,6 +184,7 @@ fun HomeScreen(
             else -> AlbumsGrid(
                 media = media,
                 trashCount = if (pick == null) trash.size else null,
+                hidden = hidden,
                 onOpen = onOpenCollection,
                 contentPadding = padding,
             )

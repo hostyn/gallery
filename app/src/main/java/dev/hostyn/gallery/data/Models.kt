@@ -74,9 +74,9 @@ private fun isCameraFolder(album: Album): Boolean {
     return if (path != null) path.trimEnd('/').equals("DCIM/Camera", ignoreCase = true) else album.name.equals("Camera", ignoreCase = true)
 }
 
-/** The items of a collection, in display order. */
-fun itemsOf(collection: Collection, media: List<Media>, trash: List<Media>): List<Media> = when (collection) {
-    Collection.All -> media
+/** The items of a collection, in display order. [hidden] folders are left out of [Collection.All] only. */
+fun itemsOf(collection: Collection, media: List<Media>, trash: List<Media>, hidden: Set<Long> = emptySet()): List<Media> = when (collection) {
+    Collection.All -> if (hidden.isEmpty()) media else media.filter { it.bucketId !in hidden }
     is Collection.Folder -> media.filter { it.bucketId == collection.bucketId }
     Collection.Favorites -> media.filter { it.isFavorite }
     Collection.Videos -> media.filter { it.isVideo }

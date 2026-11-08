@@ -18,11 +18,13 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Videocam
+import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -32,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
@@ -46,9 +49,12 @@ import dev.hostyn.gallery.data.Thumb
 import dev.hostyn.gallery.data.albumsOf
 import dev.hostyn.gallery.ui.hasSystemTrash
 
-/** Folders, plus shortcuts to favorites, videos and the trash. [trashCount] is null to hide the trash. */
+/**
+ * Folders, plus shortcuts to favorites, videos and the trash. [trashCount] is null to hide the
+ * trash; [hidden] folders are marked as not showing in Photos.
+ */
 @Composable
-fun AlbumsGrid(media: List<Media>, trashCount: Int?, onOpen: (Collection) -> Unit, contentPadding: PaddingValues) {
+fun AlbumsGrid(media: List<Media>, trashCount: Int?, hidden: Set<Long>, onOpen: (Collection) -> Unit, contentPadding: PaddingValues) {
     val albums = remember(media) { albumsOf(media) }
     val hasVideos = remember(media) { media.any { it.isVideo } }
     val hasFavorites = remember(media) { media.any { it.isFavorite } }
@@ -75,7 +81,7 @@ fun AlbumsGrid(media: List<Media>, trashCount: Int?, onOpen: (Collection) -> Uni
                 }
             }
         }
-        items(albums, key = { it.id }) { album -> AlbumCard(album) { onOpen(Collection.Folder(album.id)) } }
+        items(albums, key = { it.id }) { album -> AlbumCard(album, hidden = album.id in hidden) { onOpen(Collection.Folder(album.id)) } }
     }
 }
 
@@ -96,7 +102,7 @@ private fun Shortcut(icon: ImageVector, label: String, modifier: Modifier, onCli
 }
 
 @Composable
-private fun AlbumCard(album: Album, onClick: () -> Unit) {
+private fun AlbumCard(album: Album, hidden: Boolean, onClick: () -> Unit) {
     Column(Modifier.clip(RoundedCornerShape(20.dp)).clickable(onClick = onClick)) {
         Box(
             Modifier
@@ -106,6 +112,19 @@ private fun AlbumCard(album: Album, onClick: () -> Unit) {
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest),
         ) {
             AsyncImage(Thumb(album.cover), null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            if (hidden) {
+                Icon(
+                    Icons.Rounded.VisibilityOff,
+                    stringResource(R.string.hidden_from_photos),
+                    tint = Color.White,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp)
+                        .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                        .padding(6.dp)
+                        .size(18.dp),
+                )
+            }
         }
         Text(
             album.name.ifEmpty { stringResource(R.string.internal_storage) },

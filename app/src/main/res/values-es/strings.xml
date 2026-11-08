@@ -48,6 +48,11 @@
     <string name="delete_forever_body">No se puede deshacer.</string>
     <string name="error_no_app">Ninguna aplicación puede hacer esto</string>
     <string name="manage_media_hint">Deja que Galería gestione el contenido multimedia para no confirmar cada vez</string>
+    <string name="hide_from_photos">Ocultar en Fotos</string>
+    <string name="show_in_photos">Mostrar en Fotos</string>
+    <string name="hidden_from_photos">Oculto en Fotos</string>
+    <string name="folder_hidden">Las fotos de este álbum no aparecerán en Fotos</string>
+    <string name="folder_shown">Las fotos de este álbum aparecerán en Fotos</string>
 
     <plurals name="selected">
         <item quantity="one">%d seleccionado</item>

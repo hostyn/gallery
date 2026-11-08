@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
@@ -63,10 +64,11 @@ fun AppNavigation(access: Access, pick: PickConfig? = null) {
             arguments = listOf(navArgument("c") { type = NavType.StringType }, navArgument("id") { type = NavType.LongType }),
         ) { entry ->
             val collection = Collection.fromRoute(entry.arguments?.getString("c").orEmpty())
-            val repository = GalleryApp.of(LocalContext.current).repository
-            val media by repository.media.collectAsStateWithLifecycle()
-            val trash by repository.trash.collectAsStateWithLifecycle()
-            val items = media?.let { itemsOf(collection, it, trash) }
+            val app = GalleryApp.of(LocalContext.current)
+            val media by app.repository.media.collectAsStateWithLifecycle()
+            val trash by app.repository.trash.collectAsStateWithLifecycle()
+            val hidden = app.settings.hiddenFolders
+            val items = remember(media, trash, hidden, collection) { media?.let { itemsOf(collection, it, trash, hidden) } }
             if (items != null) {
                 ViewerScreen(
                     items = items,

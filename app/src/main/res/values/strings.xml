@@ -52,6 +52,11 @@
     <string name="delete_forever_body">This can\'t be undone.</string>
     <string name="error_no_app">No app can do this</string>
     <string name="manage_media_hint">Let Gallery manage media to skip these confirmations</string>
+    <string name="hide_from_photos">Hide from Photos</string>
+    <string name="show_in_photos">Show in Photos</string>
+    <string name="hidden_from_photos">Hidden from Photos</string>
+    <string name="folder_hidden">Photos in this album won\'t show in Photos</string>
+    <string name="folder_shown">Photos in this album will show in Photos</string>
 
     <plurals name="selected">
         <item quantity="one">%d selected</item>
