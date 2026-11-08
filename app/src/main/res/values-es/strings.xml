@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Galería</string>
+
+    <string name="photos">Fotos</string>
+    <string name="albums">Álbumes</string>
+    <string name="favorites">Favoritos</string>
+    <string name="videos">Vídeos</string>
+    <string name="trash">Papelera</string>
+    <string name="internal_storage">Almacenamiento interno</string>
+    <string name="today">Hoy</string>
+    <string name="yesterday">Ayer</string>
+
+    <string name="no_photos">Aún no hay fotos</string>
+    <string name="no_photos_body">Las fotos y vídeos que hagas o guardes aparecerán aquí.</string>
+    <string name="no_favorites">No hay favoritos</string>
+    <string name="no_favorites_body">Toca el corazón de una foto para encontrarla aquí.</string>
+    <string name="no_videos">No hay vídeos</string>
+    <string name="trash_empty">La papelera está vacía</string>
+    <string name="trash_note">Los elementos de la papelera se eliminan definitivamente a los 30 días.</string>
+
+    <string name="permission_title">Tus fotos y vídeos</string>
+    <string name="permission_body">Permite el acceso para ver las fotos y vídeos de este teléfono. Nunca salen de tu dispositivo.</string>
+    <string name="allow_access">Permitir acceso</string>
+    <string name="partial_access">Galería solo puede ver las fotos que elegiste.</string>
+    <string name="manage">Gestionar</string>
+
+    <string name="share">Compartir</string>
+    <string name="edit">Editar</string>
+    <string name="favorite">Añadir a favoritos</string>
+    <string name="unfavorite">Quitar de favoritos</string>
+    <string name="info">Detalles</string>
+    <string name="delete">Eliminar</string>
+    <string name="delete_forever">Eliminar definitivamente</string>
+    <string name="restore">Restaurar</string>
+    <string name="empty_trash">Vaciar</string>
+    <string name="use_as">Usar como</string>
+    <string name="open_with">Abrir con</string>
+    <string name="open_in_maps">Abrir en mapas</string>
+    <string name="more">Más opciones</string>
+    <string name="play">Reproducir</string>
+    <string name="pause">Pausar</string>
+    <string name="back">Atrás</string>
+    <string name="cancel">Cancelar</string>
+    <string name="done">Hecho</string>
+    <string name="undo">Deshacer</string>
+    <string name="allow">Permitir</string>
+    <string name="delete_forever_body">No se puede deshacer.</string>
+    <string name="error_no_app">Ninguna aplicación puede hacer esto</string>
+    <string name="manage_media_hint">Deja que Galería gestione el contenido multimedia para no confirmar cada vez</string>
+
+    <plurals name="selected">
+        <item quantity="one">%d seleccionado</item>
+        <item quantity="many">%d seleccionados</item>
+        <item quantity="other">%d seleccionados</item>
+    </plurals>
+    <plurals name="moved_to_trash">
+        <item quantity="one">Movido a la papelera</item>
+        <item quantity="many">%d elementos movidos a la papelera</item>
+        <item quantity="other">%d elementos movidos a la papelera</item>
+    </plurals>
+    <plurals name="restored">
+        <item quantity="one">Restaurado</item>
+        <item quantity="many">%d elementos restaurados</item>
+        <item quantity="other">%d elementos restaurados</item>
+    </plurals>
+    <plurals name="deleted">
+        <item quantity="one">Eliminado</item>
+        <item quantity="many">%d elementos eliminados</item>
+        <item quantity="other">%d elementos eliminados</item>
+    </plurals>
+    <plurals name="delete_forever_title">
+        <item quantity="one">¿Eliminar este elemento definitivamente?</item>
+        <item quantity="many">¿Eliminar %d elementos definitivamente?</item>
+        <item quantity="other">¿Eliminar %d elementos definitivamente?</item>
+    </plurals>
+    <plurals name="days_left">
+        <item quantity="one">%d día</item>
+        <item quantity="many">%d días</item>
+        <item quantity="other">%d días</item>
+    </plurals>
+    <plurals name="pick_title">
+        <item quantity="one">Elige una foto</item>
+        <item quantity="many">Elige fotos</item>
+        <item quantity="other">Elige fotos</item>
+    </plurals>
+
+    <string name="settings">Ajustes</string>
+    <string name="library">Biblioteca</string>
+    <string name="manage_media">Omitir confirmaciones</string>
+    <string name="manage_media_on">Activado: eliminar, restaurar y favoritos no preguntan cada vez</string>
+    <string name="manage_media_off">Desactivado: Android pregunta antes de eliminar, restaurar o marcar favoritos</string>
+    <string name="appearance">Apariencia</string>
+    <string name="theme">Tema</string>
+    <string name="theme_system">Predeterminado del sistema</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Oscuro</string>
+    <string name="dynamic_color">Color dinámico</string>
+    <string name="dynamic_color_summary">Usar los colores de tu fondo de pantalla</string>
+    <string name="about">Acerca de</string>
+    <string name="version">Versión</string>
+    <string name="source_code">Código fuente</string>
+</resources>

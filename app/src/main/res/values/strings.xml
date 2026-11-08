@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gallery</string>
+
+    <!-- Tabs and collections -->
+    <string name="photos">Photos</string>
+    <string name="albums">Albums</string>
+    <string name="favorites">Favorites</string>
+    <string name="videos">Videos</string>
+    <string name="trash">Trash</string>
+    <string name="internal_storage">Internal storage</string>
+    <string name="today">Today</string>
+    <string name="yesterday">Yesterday</string>
+
+    <!-- Empty states -->
+    <string name="no_photos">No photos yet</string>
+    <string name="no_photos_body">Photos and videos you take or save will show up here.</string>
+    <string name="no_favorites">No favorites</string>
+    <string name="no_favorites_body">Tap the heart on a photo to find it here.</string>
+    <string name="no_videos">No videos</string>
+    <string name="trash_empty">Trash is empty</string>
+    <string name="trash_note">Items in the trash are deleted for good after 30 days.</string>
+
+    <!-- Access -->
+    <string name="permission_title">Your photos and videos</string>
+    <string name="permission_body">Allow access to see the photos and videos on this phone. They never leave your device.</string>
+    <string name="allow_access">Allow access</string>
+    <string name="partial_access">Gallery can only see the photos you chose.</string>
+    <string name="manage">Manage</string>
+
+    <!-- Actions -->
+    <string name="share">Share</string>
+    <string name="edit">Edit</string>
+    <string name="favorite">Add to favorites</string>
+    <string name="unfavorite">Remove from favorites</string>
+    <string name="info">Details</string>
+    <string name="delete">Delete</string>
+    <string name="delete_forever">Delete forever</string>
+    <string name="restore">Restore</string>
+    <string name="empty_trash">Empty</string>
+    <string name="use_as">Use as</string>
+    <string name="open_with">Open with</string>
+    <string name="open_in_maps">Open in maps</string>
+    <string name="more">More options</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
+    <string name="back">Back</string>
+    <string name="cancel">Cancel</string>
+    <string name="done">Done</string>
+    <string name="undo">Undo</string>
+    <string name="allow">Allow</string>
+    <string name="delete_forever_body">This can\'t be undone.</string>
+    <string name="error_no_app">No app can do this</string>
+    <string name="manage_media_hint">Let Gallery manage media to skip these confirmations</string>
+
+    <plurals name="selected">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
+    </plurals>
+    <plurals name="moved_to_trash">
+        <item quantity="one">Moved to trash</item>
+        <item quantity="other">%d items moved to trash</item>
+    </plurals>
+    <plurals name="restored">
+        <item quantity="one">Restored</item>
+        <item quantity="other">%d items restored</item>
+    </plurals>
+    <plurals name="deleted">
+        <item quantity="one">Deleted</item>
+        <item quantity="other">%d items deleted</item>
+    </plurals>
+    <plurals name="delete_forever_title">
+        <item quantity="one">Delete this item forever?</item>
+        <item quantity="other">Delete %d items forever?</item>
+    </plurals>
+    <plurals name="days_left">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+    <plurals name="pick_title">
+        <item quantity="one">Choose a photo</item>
+        <item quantity="other">Choose photos</item>
+    </plurals>
+
+    <!-- Settings -->
+    <string name="settings">Settings</string>
+    <string name="library">Library</string>
+    <string name="manage_media">Skip confirmations</string>
+    <string name="manage_media_on">On: deleting, restoring and favorites don\'t ask each time</string>
+    <string name="manage_media_off">Off: Android asks before deleting, restoring or favoriting</string>
+    <string name="appearance">Appearance</string>
+    <string name="theme">Theme</string>
+    <string name="theme_system">System default</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="dynamic_color">Dynamic color</string>
+    <string name="dynamic_color_summary">Use colors from your wallpaper</string>
+    <string name="about">About</string>
+    <string name="version">Version</string>
+    <string name="source_code">Source code</string>
+</resources>
