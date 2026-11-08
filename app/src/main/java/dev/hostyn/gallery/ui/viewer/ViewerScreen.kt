@@ -3,6 +3,8 @@ package dev.hostyn.gallery.ui.viewer
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.pm.ActivityInfo
+import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.fadeIn
@@ -32,6 +34,7 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.MotionPhotosOn
 import androidx.compose.material.icons.rounded.RestoreFromTrash
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.DropdownMenu
@@ -48,6 +51,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -70,6 +74,8 @@ import androidx.core.view.WindowInsetsControllerCompat
 import coil.request.ImageRequest
 import dev.hostyn.gallery.R
 import dev.hostyn.gallery.data.Media
+import dev.hostyn.gallery.data.Probe
+import dev.hostyn.gallery.data.probe as readProbe
 import dev.hostyn.gallery.data.thumbKey
 import dev.hostyn.gallery.ui.components.fullDate
 import dev.hostyn.gallery.ui.edit
@@ -116,7 +122,13 @@ fun ViewerScreen(
     var dismissProgress by remember { mutableFloatStateOf(0f) }
     val snackbar = remember { SnackbarHostState() }
     val actions = rememberMediaActions(snackbar)
+    // What each photo has besides the picture (HDR, motion), read as its page comes up.
+    val probes = remember { mutableStateMapOf<Long, Probe>() }
+    var playingMotion by remember { mutableStateOf<Long?>(null) }
+    LaunchedEffect(pager.settledPage) { playingMotion = null }
+    val currentProbe = probes[current.id]
     ImmersiveBars(visible = chrome)
+    HdrMode(enabled = currentProbe?.hdr == true && !current.isVideo)
 
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 1f - dismissProgress))) {
         HorizontalPager(
@@ -138,7 +150,17 @@ fun ViewerScreen(
                     onDismissProgress = onProgress,
                 )
             } else {
-                ImagePage(media, onTap = { chrome = !chrome }, onDismiss = onBack, onDismissProgress = onProgress)
+                ImagePage(
+                    media = media,
+                    probe = probes[media.id],
+                    onProbe = { probes[media.id] = it },
+                    playMotion = playingMotion == media.id,
+                    onPlayMotion = { playingMotion = media.id },
+                    onMotionEnd = { if (playingMotion == media.id) playingMotion = null },
+                    onTap = { chrome = !chrome },
+                    onDismiss = onBack,
+                    onDismissProgress = onProgress,
+                )
             }
         }
 
@@ -149,7 +171,14 @@ fun ViewerScreen(
                 exit = fadeOut(),
                 modifier = Modifier.align(Alignment.TopCenter),
             ) {
-                TopBar(current, external, onBack)
+                TopBar(
+                    media = current,
+                    external = external,
+                    onBack = onBack,
+                    onPlayMotion = if (currentProbe?.motion != null && !current.isVideo) {
+                        { playingMotion = current.id }
+                    } else null,
+                )
             }
             AnimatedVisibility(
                 visible = chrome && dismissProgress == 0f,
@@ -199,7 +228,7 @@ fun ViewerScreen(
 }
 
 @Composable
-private fun TopBar(media: Media, external: Boolean, onBack: () -> Unit) {
+private fun TopBar(media: Media, external: Boolean, onBack: () -> Unit, onPlayMotion: (() -> Unit)?) {
     val context = LocalContext.current
     var menu by remember { mutableStateOf(false) }
     Row(
@@ -220,6 +249,9 @@ private fun TopBar(media: Media, external: Boolean, onBack: () -> Unit) {
                 Text(media.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
+        if (onPlayMotion != null) {
+            IconButton(onClick = onPlayMotion) { Icon(Icons.Rounded.MotionPhotosOn, stringResource(R.string.play_motion)) }
+        }
         Box {
             IconButton(onClick = { menu = true }) { Icon(Icons.Rounded.MoreVert, stringResource(R.string.more)) }
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
@@ -233,10 +265,24 @@ private fun TopBar(media: Media, external: Boolean, onBack: () -> Unit) {
 }
 
 @Composable
-private fun ImagePage(media: Media, onTap: () -> Unit, onDismiss: () -> Unit, onDismissProgress: (Float) -> Unit) {
+private fun ImagePage(
+    media: Media,
+    probe: Probe?,
+    onProbe: (Probe) -> Unit,
+    playMotion: Boolean,
+    onPlayMotion: () -> Unit,
+    onMotionEnd: () -> Unit,
+    onTap: () -> Unit,
+    onDismiss: () -> Unit,
+    onDismissProgress: (Float) -> Unit,
+) {
     val context = LocalContext.current
     val zoom = rememberZoomableImageState(rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 8f)))
     val zoomed = (zoom.zoomableState.zoomFraction ?: 0f) > 0.01f
+    LaunchedEffect(media.uri, media.modified) { if (probe == null) onProbe(readProbe(context, media)) }
+    // The video is the size of the whole photo, so show the whole photo.
+    LaunchedEffect(playMotion) { if (playMotion) zoom.zoomableState.resetZoom() }
+    val motion = probe?.motion
     DismissBox(enabled = !zoomed, onDismiss = onDismiss, onProgress = onDismissProgress) {
         val request = remember(media) {
             ImageRequest.Builder(context)
@@ -250,8 +296,26 @@ private fun ImagePage(media: Media, onTap: () -> Unit, onDismiss: () -> Unit, on
             contentDescription = media.name,
             state = zoom,
             onClick = { onTap() },
+            onLongClick = if (motion != null) {
+                { onPlayMotion() }
+            } else null,
             modifier = Modifier.fillMaxSize(),
         )
+        if (playMotion && motion != null) MotionVideoPlayer(media, motion, onEnd = onMotionEnd)
+    }
+}
+
+/**
+ * Lets the screen show an Ultra HDR photo with its extra brightness (Android 14+), only while one
+ * is on screen: HDR mode costs battery and dims the rest of the interface.
+ */
+@Composable
+private fun HdrMode(enabled: Boolean) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) return
+    val window = LocalView.current.context.findActivity()?.window ?: return
+    DisposableEffect(window, enabled) {
+        window.colorMode = if (enabled) ActivityInfo.COLOR_MODE_HDR else ActivityInfo.COLOR_MODE_DEFAULT
+        onDispose { window.colorMode = ActivityInfo.COLOR_MODE_DEFAULT }
     }
 }
 
