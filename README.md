@@ -19,6 +19,8 @@ It shows the photos and videos already on your phone, grouped by day, and lets y
 - Fast scroller with the month you are scrolling through.
 - Long-press to select, then drag to select more; tap a day's header to select the whole day.
 - Share, favorite or delete several at once.
+- Animated GIFs and WebPs move, here and in the viewer.
+- Keep a folder out of Photos (WhatsApp, screenshots…) from its album's menu; it stays in Albums.
 
 ### Albums
 - One album per folder (Camera first), plus Favorites, Videos and Trash.
@@ -29,6 +31,8 @@ It shows the photos and videos already on your phone, grouped by day, and lets y
 - Swipe between photos, pinch or double-tap to zoom, swipe down to close.
 - Tap to hide the controls and see the photo full screen.
 - Videos play inline, with a seek bar.
+- Motion photos (Google and Samsung): tap the motion button or long-press the photo to play its video.
+- Ultra HDR photos show with their full brightness on HDR screens (Android 14+).
 - Share, edit (with any editor app), favorite, delete, use as wallpaper or contact photo, open with another app.
 - Details: date, size, resolution, folder, camera and settings (aperture, exposure, ISO, focal length) and location, with a link to open it in your maps app.
 
@@ -58,7 +62,7 @@ Requirements: JDK 17 and the Android SDK.
 
 ```bash
 ./gradlew installDebug         # build and install a debug build on a connected device
-./gradlew testDebugUnitTest    # unit tests (date grouping, albums, photo details)
+./gradlew testDebugUnitTest    # unit tests (date grouping, albums, photo details, motion photo and HDR detection)
 ./gradlew assembleRelease      # unsigned release build, minified with R8
 ```
 
@@ -77,7 +81,8 @@ To make a signed release, run `scripts/release.sh`. It builds the release, signs
 
 ```
 app/src/main/java/dev/hostyn/gallery/
-├── data/        Library (MediaStore), albums, date grouping, thumbnails, photo details, settings
+├── data/        Library (MediaStore), albums, date grouping, thumbnails, photo details,
+│                motion photos and HDR, settings
 └── ui/
     ├── photos/      Photos grid, album and trash screens
     ├── albums/      Albums list
