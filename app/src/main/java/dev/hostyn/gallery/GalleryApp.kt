@@ -9,6 +9,7 @@ import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import dev.hostyn.gallery.data.AppSettings
 import dev.hostyn.gallery.data.MediaRepository
+import dev.hostyn.gallery.data.ProbeCache
 import dev.hostyn.gallery.data.ThumbFetcher
 import dev.hostyn.gallery.data.ThumbKeyer
 import kotlinx.coroutines.CoroutineScope
@@ -21,6 +22,7 @@ class GalleryApp : Application(), ImageLoaderFactory {
     /** For work that must outlive a screen. */
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     val repository by lazy { MediaRepository(this, scope) }
+    val probes by lazy { ProbeCache(this, scope) }
 
     override fun newImageLoader(): ImageLoader = ImageLoader.Builder(this)
         .components {

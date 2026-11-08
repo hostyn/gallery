@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -66,9 +67,12 @@ fun VideoPage(
     media: Media,
     isCurrent: Boolean,
     chrome: Boolean,
+    shared: Boolean,
+    transitioning: Boolean,
     onTap: () -> Unit,
     onDismiss: () -> Unit,
     onDismissProgress: (Float) -> Unit,
+    onSwipeUp: () -> Unit,
 ) {
     val context = LocalContext.current
     val player = remember(isCurrent, media.uri) {
@@ -122,10 +126,12 @@ fun VideoPage(
     }
     LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { player?.pause() }
 
-    DismissBox(enabled = true, onDismiss = onDismiss, onProgress = onDismissProgress) {
+    DismissBox(enabled = true, onDismiss = onDismiss, onProgress = onDismissProgress, onSwipeUp = onSwipeUp) {
+        if (shared) TransitionPicture(media, visible = transitioning)
         Box(
             Modifier
                 .fillMaxSize()
+                .graphicsLayer { alpha = if (transitioning) 0f else 1f }
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onTap),
             contentAlignment = Alignment.Center,
         ) {

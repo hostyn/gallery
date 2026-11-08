@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -62,6 +63,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
@@ -71,13 +73,18 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import dev.hostyn.gallery.GalleryApp
 import dev.hostyn.gallery.R
 import dev.hostyn.gallery.data.Media
 import dev.hostyn.gallery.data.Probe
-import dev.hostyn.gallery.data.probe as readProbe
+import dev.hostyn.gallery.data.Thumb
+import dev.hostyn.gallery.data.mayBeAnimated
 import dev.hostyn.gallery.data.thumbKey
 import dev.hostyn.gallery.ui.components.fullDate
+import dev.hostyn.gallery.ui.components.inNavTransition
+import dev.hostyn.gallery.ui.components.sharedMedia
 import dev.hostyn.gallery.ui.edit
 import dev.hostyn.gallery.ui.hasSystemTrash
 import dev.hostyn.gallery.ui.openWith
@@ -123,10 +130,12 @@ fun ViewerScreen(
     val snackbar = remember { SnackbarHostState() }
     val actions = rememberMediaActions(snackbar)
     // What each photo has besides the picture (HDR, motion), read as its page comes up.
+    val probeCache = GalleryApp.of(context).probes
     val probes = remember { mutableStateMapOf<Long, Probe>() }
     var playingMotion by remember { mutableStateOf<Long?>(null) }
     LaunchedEffect(pager.settledPage) { playingMotion = null }
-    val currentProbe = probes[current.id]
+    val currentProbe = probes[current.id] ?: probeCache.peek(current)
+    val transitioning = inNavTransition()
     ImmersiveBars(visible = chrome)
     HdrMode(enabled = currentProbe?.hdr == true && !current.isVideo)
 
@@ -140,26 +149,34 @@ fun ViewerScreen(
         ) { page ->
             val media = items[page]
             val onProgress = { p: Float -> if (page == pager.currentPage) dismissProgress = p }
+            val isCurrentPage = page == pager.currentPage
+            val pageTransitioning = transitioning && isCurrentPage
             if (media.isVideo) {
                 VideoPage(
                     media = media,
                     isCurrent = pager.settledPage == page,
-                    chrome = chrome,
+                    chrome = chrome && !transitioning,
+                    shared = isCurrentPage,
+                    transitioning = pageTransitioning,
                     onTap = { chrome = !chrome },
                     onDismiss = onBack,
                     onDismissProgress = onProgress,
+                    onSwipeUp = { showInfo = true },
                 )
             } else {
                 ImagePage(
                     media = media,
-                    probe = probes[media.id],
+                    probe = probes[media.id] ?: probeCache.peek(media),
                     onProbe = { probes[media.id] = it },
+                    shared = isCurrentPage,
+                    transitioning = pageTransitioning,
                     playMotion = playingMotion == media.id,
                     onPlayMotion = { playingMotion = media.id },
                     onMotionEnd = { if (playingMotion == media.id) playingMotion = null },
                     onTap = { chrome = !chrome },
                     onDismiss = onBack,
                     onDismissProgress = onProgress,
+                    onSwipeUp = { showInfo = true },
                 )
             }
         }
@@ -269,21 +286,24 @@ private fun ImagePage(
     media: Media,
     probe: Probe?,
     onProbe: (Probe) -> Unit,
+    shared: Boolean,
+    transitioning: Boolean,
     playMotion: Boolean,
     onPlayMotion: () -> Unit,
     onMotionEnd: () -> Unit,
     onTap: () -> Unit,
     onDismiss: () -> Unit,
     onDismissProgress: (Float) -> Unit,
+    onSwipeUp: () -> Unit,
 ) {
     val context = LocalContext.current
     val zoom = rememberZoomableImageState(rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 8f)))
     val zoomed = (zoom.zoomableState.zoomFraction ?: 0f) > 0.01f
-    LaunchedEffect(media.uri, media.modified) { if (probe == null) onProbe(readProbe(context, media)) }
+    LaunchedEffect(media.uri, media.modified) { if (probe == null) onProbe(GalleryApp.of(context).probes.get(media)) }
     // The video is the size of the whole photo, so show the whole photo.
     LaunchedEffect(playMotion) { if (playMotion) zoom.zoomableState.resetZoom() }
     val motion = probe?.motion
-    DismissBox(enabled = !zoomed, onDismiss = onDismiss, onProgress = onDismissProgress) {
+    DismissBox(enabled = !zoomed, onDismiss = onDismiss, onProgress = onDismissProgress, onSwipeUp = onSwipeUp) {
         val request = remember(media) {
             ImageRequest.Builder(context)
                 .data(media.uri)
@@ -299,9 +319,10 @@ private fun ImagePage(
             onLongClick = if (motion != null) {
                 { onPlayMotion() }
             } else null,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().graphicsLayer { alpha = if (transitioning) 0f else 1f },
         )
         if (playMotion && motion != null) MotionVideoPlayer(media, motion, onEnd = onMotionEnd)
+        if (shared) TransitionPicture(media, visible = transitioning)
     }
 }
 
@@ -319,39 +340,83 @@ private fun HdrMode(enabled: Boolean) {
     }
 }
 
-/** Follows a vertical drag on the page and closes the viewer when it goes far or fast enough. */
+/**
+ * Follows a vertical drag on the page: down closes the viewer when it goes far or fast enough,
+ * up calls [onSwipeUp] (the details) and springs back.
+ */
 @Composable
-fun DismissBox(enabled: Boolean, onDismiss: () -> Unit, onProgress: (Float) -> Unit, content: @Composable BoxScope.() -> Unit) {
+fun DismissBox(
+    enabled: Boolean,
+    onDismiss: () -> Unit,
+    onProgress: (Float) -> Unit,
+    onSwipeUp: () -> Unit,
+    content: @Composable BoxScope.() -> Unit,
+) {
     val offset = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
     val threshold = with(LocalDensity.current) { 120.dp.toPx() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val height = constraints.maxHeight.toFloat().coerceAtLeast(1f)
-        LaunchedEffect(offset.value) { onProgress((abs(offset.value) / (height / 2)).coerceIn(0f, 1f)) }
+        LaunchedEffect(offset.value) { onProgress((offset.value / (height / 2)).coerceIn(0f, 1f)) }
         Box(
             Modifier
                 .fillMaxSize()
                 .draggable(
                     orientation = Orientation.Vertical,
                     enabled = enabled,
-                    state = rememberDraggableState { delta -> scope.launch { offset.snapTo(offset.value + delta) } },
+                    state = rememberDraggableState { delta ->
+                        // Upwards the photo only follows halfway: it is a hint, not a move.
+                        val step = if (offset.value + delta < 0) delta / 2 else delta
+                        scope.launch { offset.snapTo(offset.value + step) }
+                    },
                     onDragStopped = { velocity ->
-                        if (abs(offset.value) > threshold || abs(velocity) > 3000f) {
-                            onDismiss()
-                        } else {
-                            offset.animateTo(0f)
+                        when {
+                            offset.value > threshold || (offset.value > 0 && velocity > 3000f) -> onDismiss()
+                            offset.value < -threshold / 2 || (offset.value < 0 && velocity < -2000f) -> {
+                                onSwipeUp()
+                                offset.animateTo(0f)
+                            }
+                            else -> offset.animateTo(0f)
                         }
                     },
                 )
                 .graphicsLayer {
                     translationY = offset.value
-                    val scale = 1f - (abs(offset.value) / height).coerceIn(0f, 1f) * 0.3f
+                    val scale = 1f - (offset.value / height).coerceIn(0f, 1f) * 0.3f
                     scaleX = scale
                     scaleY = scale
                 },
             content = content,
         )
     }
+}
+
+/**
+ * The photo as a plain picture the size it has on screen, which grows from (or shrinks into) its
+ * thumbnail in the grid while the viewer opens or closes; the real page is hidden meanwhile.
+ * It stays composed, invisible, the rest of the time, so the closing animation knows where it starts.
+ */
+@Composable
+fun BoxScope.TransitionPicture(media: Media, visible: Boolean) {
+    val context = LocalContext.current
+    val aspect = if (media.width > 0 && media.height > 0) media.width.toFloat() / media.height else 1f
+    val request = remember(media) {
+        ImageRequest.Builder(context)
+            .data(if (media.mayBeAnimated) media.uri else Thumb(media))
+            .placeholderMemoryCacheKey(if (media.mayBeAnimated) media.uri.toString() else thumbKey(media))
+            .crossfade(false)
+            .build()
+    }
+    AsyncImage(
+        model = request,
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        modifier = Modifier
+            .align(Alignment.Center)
+            .graphicsLayer { alpha = if (visible) 1f else 0f }
+            .sharedMedia(media)
+            .aspectRatio(aspect),
+    )
 }
 
 /** Light icons on the black viewer, and hides the system bars along with our controls. */

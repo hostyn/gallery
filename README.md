@@ -28,10 +28,10 @@ It shows the photos and videos already on your phone, grouped by day, and lets y
 - Optional "Skip confirmations" (Android 12+): with the *Media management* permission, trashing and favoriting happen at once, with an Undo button, instead of a system dialog each time.
 
 ### Viewer
-- Swipe between photos, pinch or double-tap to zoom, swipe down to close.
+- Photos grow from their thumbnail when you open them. Swipe between photos, pinch or double-tap to zoom, swipe down to close, swipe up for details.
 - Tap to hide the controls and see the photo full screen.
 - Videos play inline, with a seek bar.
-- Motion photos (Google and Samsung): tap the motion button or long-press the photo to play its video.
+- Motion photos (Google and Samsung), marked in the grid: tap the motion button or long-press the photo to play its video.
 - Ultra HDR photos show with their full brightness on HDR screens (Android 14+).
 - Share, edit (with any editor app), favorite, delete, use as wallpaper or contact photo, open with another app.
 - Details: date, size, resolution, folder, camera and settings (aperture, exposure, ISO, focal length) and location, with a link to open it in your maps app.

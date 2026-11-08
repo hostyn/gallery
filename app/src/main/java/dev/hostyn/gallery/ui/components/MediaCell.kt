@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.MotionPhotosOn
 import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material3.Icon
@@ -24,7 +25,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
@@ -39,6 +43,8 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import dev.hostyn.gallery.GalleryApp
+import dev.hostyn.gallery.R
 import dev.hostyn.gallery.data.Media
 import dev.hostyn.gallery.data.Thumb
 import dev.hostyn.gallery.data.formatDuration
@@ -58,6 +64,10 @@ fun MediaCell(
     badge: (@Composable BoxScope.() -> Unit)? = null,
 ) {
     val isSelected = selected == true
+    val probes = GalleryApp.of(LocalContext.current).probes
+    val isMotion by produceState(probes.peek(media)?.motion != null, media.id, media.modified) {
+        value = probes.get(media).motion != null
+    }
     val scale by animateFloatAsState(if (isSelected) 0.84f else 1f, label = "scale")
     val corner by animateDpAsState(if (isSelected) 14.dp else 0.dp, label = "corner")
     Box(
@@ -85,9 +95,9 @@ fun MediaCell(
                 model = if (media.mayBeAnimated) media.uri else Thumb(media),
                 contentDescription = media.name,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.sharedMedia(media).fillMaxSize(),
             )
-            if (media.isVideo || media.isFavorite || badge != null) {
+            if (media.isVideo || isMotion || media.isFavorite || badge != null) {
                 // Keeps the white labels readable on bright photos.
                 Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to Color.Black.copy(alpha = 0.28f), 0.35f to Color.Transparent)))
             }
@@ -101,6 +111,13 @@ fun MediaCell(
                     Spacer(Modifier.width(4.dp))
                     Icon(Icons.Rounded.PlayCircle, null, tint = Color.White, modifier = Modifier.size(18.dp))
                 }
+            } else if (isMotion) {
+                Icon(
+                    Icons.Rounded.MotionPhotosOn,
+                    stringResource(R.string.motion_photo),
+                    tint = Color.White,
+                    modifier = Modifier.align(Alignment.TopEnd).padding(6.dp).size(18.dp),
+                )
             }
             if (media.isFavorite) {
                 Icon(Icons.Rounded.Favorite, null, tint = Color.White, modifier = Modifier.align(Alignment.BottomStart).padding(6.dp).size(16.dp))

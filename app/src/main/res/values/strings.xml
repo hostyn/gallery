@@ -53,6 +53,7 @@
     <string name="error_no_app">No app can do this</string>
     <string name="manage_media_hint">Let Gallery manage media to skip these confirmations</string>
     <string name="play_motion">Play motion</string>
+    <string name="motion_photo">Motion photo</string>
     <string name="hide_from_photos">Hide from Photos</string>
     <string name="show_in_photos">Show in Photos</string>
     <string name="hidden_from_photos">Hidden from Photos</string>

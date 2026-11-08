@@ -49,6 +49,7 @@
     <string name="error_no_app">Ninguna aplicación puede hacer esto</string>
     <string name="manage_media_hint">Deja que Galería gestione el contenido multimedia para no confirmar cada vez</string>
     <string name="play_motion">Reproducir movimiento</string>
+    <string name="motion_photo">Foto en movimiento</string>
     <string name="hide_from_photos">Ocultar en Fotos</string>
     <string name="show_in_photos">Mostrar en Fotos</string>
     <string name="hidden_from_photos">Oculto en Fotos</string>
