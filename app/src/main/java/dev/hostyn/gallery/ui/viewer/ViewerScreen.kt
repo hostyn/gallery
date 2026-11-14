@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 package dev.hostyn.gallery.ui.viewer
 
 import android.app.Activity
@@ -6,7 +8,8 @@ import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
 import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -40,6 +43,10 @@ import androidx.compose.material.icons.rounded.RestoreFromTrash
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FloatingToolbarDefaults
+import androidx.compose.material3.HorizontalFloatingToolbar
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -90,9 +97,11 @@ import dev.hostyn.gallery.ui.hasSystemTrash
 import dev.hostyn.gallery.ui.openWith
 import dev.hostyn.gallery.ui.rememberMediaActions
 import dev.hostyn.gallery.ui.share
+import dev.hostyn.gallery.ui.theme.appColorScheme
 import dev.hostyn.gallery.ui.theme.appInDarkTheme
 import dev.hostyn.gallery.ui.useAs
 import androidx.compose.material3.LocalContentColor
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.ZoomSpec
 import me.saket.telephoto.zoomable.coil.ZoomableAsyncImage
@@ -100,8 +109,8 @@ import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
 import kotlin.math.abs
 
-/** Space the bottom actions take, so video controls and snackbars sit above them. */
-val BottomBarHeight = 72.dp
+/** Space the floating toolbar takes (with its margin), so video controls and snackbars sit above it. */
+val BottomBarHeight = 88.dp
 
 /**
  * Full-screen photos and videos: swipe between them, pinch or double-tap to zoom, swipe down
@@ -125,7 +134,7 @@ fun ViewerScreen(
     val pager = rememberPagerState(initialPage = startIndex) { items.size }
     val current = items[pager.currentPage.coerceIn(0, items.lastIndex)]
     var chrome by rememberSaveable { mutableStateOf(true) }
-    var showInfo by remember { mutableStateOf(false) }
+    val info = rememberInfoState()
     var dismissProgress by remember { mutableFloatStateOf(0f) }
     val snackbar = remember { SnackbarHostState() }
     val actions = rememberMediaActions(snackbar)
@@ -137,6 +146,9 @@ fun ViewerScreen(
     val currentProbe = probes[current.id] ?: probeCache.peek(current)
     val transitioning = inNavTransition()
     ImmersiveBars(visible = chrome)
+    BackHandler(info.isOpen) { info.animateTo(false) }
+    // With the details up, a tap on the photo puts them away instead of hiding the controls.
+    val onTap = { if (info.isOpen) info.animateTo(false) else chrome = !chrome }
     HdrMode(enabled = currentProbe?.hdr == true && !current.isVideo)
 
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 1f - dismissProgress))) {
@@ -158,10 +170,10 @@ fun ViewerScreen(
                     chrome = chrome && !transitioning,
                     shared = isCurrentPage,
                     transitioning = pageTransitioning,
-                    onTap = { chrome = !chrome },
+                    onTap = onTap,
                     onDismiss = onBack,
                     onDismissProgress = onProgress,
-                    onSwipeUp = { showInfo = true },
+                    info = info,
                 )
             } else {
                 ImagePage(
@@ -173,10 +185,10 @@ fun ViewerScreen(
                     playMotion = playingMotion == media.id,
                     onPlayMotion = { playingMotion = media.id },
                     onMotionEnd = { if (playingMotion == media.id) playingMotion = null },
-                    onTap = { chrome = !chrome },
+                    onTap = onTap,
                     onDismiss = onBack,
                     onDismissProgress = onProgress,
-                    onSwipeUp = { showInfo = true },
+                    info = info,
                 )
             }
         }
@@ -197,41 +209,43 @@ fun ViewerScreen(
                     } else null,
                 )
             }
+        }
+        // The viewer is always black, so its toolbar always uses the dark scheme.
+        val viewerColors = appColorScheme(context, dark = true, dynamic = GalleryApp.of(context).settings.dynamicColor)
+        MaterialTheme(colorScheme = viewerColors) {
+            InfoPanel(current, info, Modifier.align(Alignment.BottomCenter))
             AnimatedVisibility(
-                visible = chrome && dismissProgress == 0f,
+                visible = chrome && dismissProgress == 0f && !info.isOpen,
                 enter = fadeIn(),
                 exit = fadeOut(),
-                modifier = Modifier.align(Alignment.BottomCenter),
+                modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 16.dp),
             ) {
-                Row(
-                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))))
-                        .navigationBarsPadding()
-                        .padding(vertical = 12.dp),
+                // M3 floating toolbar: actions for the photo on screen, floating over it.
+                HorizontalFloatingToolbar(
+                    expanded = true,
+                    colors = FloatingToolbarDefaults.standardFloatingToolbarColors(),
                 ) {
+                    val shapes = IconButtonDefaults.shapes()
                     when {
                         inTrash -> {
-                            IconButton(onClick = { actions.restore(listOf(current)) }) { Icon(Icons.Rounded.RestoreFromTrash, stringResource(R.string.restore)) }
-                            IconButton(onClick = { showInfo = true }) { Icon(Icons.Outlined.Info, stringResource(R.string.info)) }
-                            IconButton(onClick = { actions.deleteForever(listOf(current)) }) { Icon(Icons.Rounded.DeleteForever, stringResource(R.string.delete_forever)) }
+                            IconButton(onClick = { actions.restore(listOf(current)) }, shapes = shapes) { Icon(Icons.Rounded.RestoreFromTrash, stringResource(R.string.restore)) }
+                            IconButton(onClick = { info.animateTo(true) }, shapes = shapes) { Icon(Icons.Outlined.Info, stringResource(R.string.info)) }
+                            IconButton(onClick = { actions.deleteForever(listOf(current)) }, shapes = shapes) { Icon(Icons.Rounded.DeleteForever, stringResource(R.string.delete_forever)) }
                         }
                         else -> {
-                            IconButton(onClick = { share(context, listOf(current)) }) { Icon(Icons.Rounded.Share, stringResource(R.string.share)) }
-                            IconButton(onClick = { edit(context, current) }) { Icon(Icons.Rounded.Edit, stringResource(R.string.edit)) }
+                            IconButton(onClick = { share(context, listOf(current)) }, shapes = shapes) { Icon(Icons.Rounded.Share, stringResource(R.string.share)) }
+                            IconButton(onClick = { edit(context, current) }, shapes = shapes) { Icon(Icons.Rounded.Edit, stringResource(R.string.edit)) }
                             if (!external && hasSystemTrash) {
-                                IconButton(onClick = { actions.setFavorite(listOf(current), !current.isFavorite) }) {
+                                IconButton(onClick = { actions.setFavorite(listOf(current), !current.isFavorite) }, shapes = shapes) {
                                     Icon(
                                         if (current.isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
                                         stringResource(if (current.isFavorite) R.string.unfavorite else R.string.favorite),
                                     )
                                 }
                             }
-                            IconButton(onClick = { showInfo = true }) { Icon(Icons.Outlined.Info, stringResource(R.string.info)) }
+                            IconButton(onClick = { info.animateTo(true) }, shapes = shapes) { Icon(Icons.Outlined.Info, stringResource(R.string.info)) }
                             if (!external) {
-                                IconButton(onClick = { actions.moveToTrash(listOf(current)) }) { Icon(Icons.Rounded.Delete, stringResource(R.string.delete)) }
+                                IconButton(onClick = { actions.moveToTrash(listOf(current)) }, shapes = shapes) { Icon(Icons.Rounded.Delete, stringResource(R.string.delete)) }
                             }
                         }
                     }
@@ -241,7 +255,6 @@ fun ViewerScreen(
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = BottomBarHeight))
     }
 
-    if (showInfo) InfoSheet(current, onDismiss = { showInfo = false })
 }
 
 @Composable
@@ -256,21 +269,21 @@ private fun TopBar(media: Media, external: Boolean, onBack: () -> Unit, onPlayMo
             .statusBarsPadding()
             .padding(horizontal = 4.dp, vertical = 8.dp),
     ) {
-        IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.back)) }
+        IconButton(onClick = onBack, shapes = IconButtonDefaults.shapes()) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.back)) }
         Column(Modifier.weight(1f).padding(horizontal = 8.dp)) {
             if (media.date > 0) {
                 val (date, time) = fullDate(media.date)
-                Text(date, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(date, style = MaterialTheme.typography.titleMediumEmphasized, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(time, style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
             } else if (external) {
                 Text(media.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
         if (onPlayMotion != null) {
-            IconButton(onClick = onPlayMotion) { Icon(Icons.Rounded.MotionPhotosOn, stringResource(R.string.play_motion)) }
+            IconButton(onClick = onPlayMotion, shapes = IconButtonDefaults.shapes()) { Icon(Icons.Rounded.MotionPhotosOn, stringResource(R.string.play_motion)) }
         }
         Box {
-            IconButton(onClick = { menu = true }) { Icon(Icons.Rounded.MoreVert, stringResource(R.string.more)) }
+            IconButton(onClick = { menu = true }, shapes = IconButtonDefaults.shapes()) { Icon(Icons.Rounded.MoreVert, stringResource(R.string.more)) }
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                 if (!media.isVideo) {
                     DropdownMenuItem(text = { Text(stringResource(R.string.use_as)) }, onClick = { menu = false; useAs(context, media) })
@@ -294,7 +307,7 @@ private fun ImagePage(
     onTap: () -> Unit,
     onDismiss: () -> Unit,
     onDismissProgress: (Float) -> Unit,
-    onSwipeUp: () -> Unit,
+    info: InfoState,
 ) {
     val context = LocalContext.current
     val zoom = rememberZoomableImageState(rememberZoomableState(zoomSpec = ZoomSpec(maxZoomFactor = 8f)))
@@ -303,7 +316,8 @@ private fun ImagePage(
     // The video is the size of the whole photo, so show the whole photo.
     LaunchedEffect(playMotion) { if (playMotion) zoom.zoomableState.resetZoom() }
     val motion = probe?.motion
-    DismissBox(enabled = !zoomed, onDismiss = onDismiss, onProgress = onDismissProgress, onSwipeUp = onSwipeUp) {
+    val aspect = if (media.width > 0 && media.height > 0) media.width.toFloat() / media.height else 0f
+    DismissBox(enabled = !zoomed, aspect = aspect, info = info, onDismiss = onDismiss, onProgress = onDismissProgress) {
         val request = remember(media) {
             ImageRequest.Builder(context)
                 .data(media.uri)
@@ -341,23 +355,32 @@ private fun HdrMode(enabled: Boolean) {
 }
 
 /**
- * Follows a vertical drag on the page: down closes the viewer when it goes far or fast enough,
- * up calls [onSwipeUp] (the details) and springs back.
+ * Follows a vertical drag on the page: down closes the viewer when it goes far or fast enough
+ * (or springs back), up brings the details panel in ([info]). The panel first covers the empty
+ * band below the photo ([aspect] is its width / height) and only then pushes the photo up.
  */
 @Composable
 fun DismissBox(
     enabled: Boolean,
+    aspect: Float,
+    info: InfoState,
     onDismiss: () -> Unit,
     onProgress: (Float) -> Unit,
-    onSwipeUp: () -> Unit,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    val offset = remember { Animatable(0f) }
+    // A plain state changed right away by each move: moves queued in coroutines could land after
+    // the spring back started, cancel it and leave the photo hanging where the finger let go.
+    var offset by remember { mutableFloatStateOf(0f) }
+    var springBack by remember { mutableStateOf<Job?>(null) }
+    // Whether this drag moves the details (true) or the photo (false), decided by its first move.
+    var forInfo by remember { mutableStateOf<Boolean?>(null) }
     val scope = rememberCoroutineScope()
     val threshold = with(LocalDensity.current) { 120.dp.toPx() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val height = constraints.maxHeight.toFloat().coerceAtLeast(1f)
-        LaunchedEffect(offset.value) { onProgress((offset.value / (height / 2)).coerceIn(0f, 1f)) }
+        val shownHeight = if (aspect > 0) minOf(height, constraints.maxWidth / aspect) else height
+        val bandBelow = (height - shownHeight) / 2
+        LaunchedEffect(offset) { onProgress((offset / (height / 2)).coerceIn(0f, 1f)) }
         Box(
             Modifier
                 .fillMaxSize()
@@ -365,24 +388,29 @@ fun DismissBox(
                     orientation = Orientation.Vertical,
                     enabled = enabled,
                     state = rememberDraggableState { delta ->
-                        // Upwards the photo only follows halfway: it is a hint, not a move.
-                        val step = if (offset.value + delta < 0) delta / 2 else delta
-                        scope.launch { offset.snapTo(offset.value + step) }
+                        val up = forInfo ?: (info.isOpen || delta < 0).also { forInfo = it }
+                        if (up) info.dragBy(delta) else offset = (offset + delta).coerceAtLeast(0f)
+                    },
+                    onDragStarted = {
+                        springBack?.cancel()
+                        forInfo = null
                     },
                     onDragStopped = { velocity ->
                         when {
-                            offset.value > threshold || (offset.value > 0 && velocity > 3000f) -> onDismiss()
-                            offset.value < -threshold / 2 || (offset.value < 0 && velocity < -2000f) -> {
-                                onSwipeUp()
-                                offset.animateTo(0f)
+                            forInfo == true -> info.settle(velocity)
+                            offset > threshold || (offset > 0 && velocity > 3000f) -> onDismiss()
+                            offset != 0f -> springBack = scope.launch {
+                                animate(offset, 0f, initialVelocity = velocity) { v, _ -> offset = v }
                             }
-                            else -> offset.animateTo(0f)
                         }
+                        forInfo = null
                     },
                 )
+                // Drawn moved, after the drag: the drag measures the finger against the screen, not
+                // against a photo that moves along with it. Up, the details panel pushes the photo.
                 .graphicsLayer {
-                    translationY = offset.value
-                    val scale = 1f - (offset.value / height).coerceIn(0f, 1f) * 0.3f
+                    translationY = offset - (info.shown - bandBelow).coerceAtLeast(0f)
+                    val scale = 1f - (offset / height).coerceIn(0f, 1f) * 0.3f
                     scaleX = scale
                     scaleY = scale
                 },

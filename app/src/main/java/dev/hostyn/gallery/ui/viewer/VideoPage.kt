@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+
 package dev.hostyn.gallery.ui.viewer
 
 import android.view.TextureView
@@ -72,7 +74,7 @@ fun VideoPage(
     onTap: () -> Unit,
     onDismiss: () -> Unit,
     onDismissProgress: (Float) -> Unit,
-    onSwipeUp: () -> Unit,
+    info: InfoState,
 ) {
     val context = LocalContext.current
     val player = remember(isCurrent, media.uri) {
@@ -126,7 +128,7 @@ fun VideoPage(
     }
     LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { player?.pause() }
 
-    DismissBox(enabled = true, onDismiss = onDismiss, onProgress = onDismissProgress, onSwipeUp = onSwipeUp) {
+    DismissBox(enabled = true, aspect = aspect, info = info, onDismiss = onDismiss, onProgress = onDismissProgress) {
         if (shared) TransitionPicture(media, visible = transitioning)
         Box(
             Modifier
@@ -166,7 +168,8 @@ fun VideoPage(
                         }
                     },
                     colors = IconButtonDefaults.filledTonalIconButtonColors(containerColor = Color.Black.copy(alpha = 0.45f), contentColor = Color.White),
-                    modifier = Modifier.size(72.dp),
+                    shapes = IconButtonDefaults.shapes(),
+                    modifier = Modifier.size(80.dp),
                 ) {
                     Icon(
                         when {
@@ -215,5 +218,5 @@ fun VideoPage(
 
 @Composable
 private fun TimeText(text: String) {
-    Text(text, style = MaterialTheme.typography.labelMedium, color = Color.White)
+    Text(text, style = MaterialTheme.typography.labelLargeEmphasized, color = Color.White)
 }

@@ -21,7 +21,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
@@ -47,13 +46,15 @@ fun MotionVideoPlayer(media: Media, video: MotionVideo, onEnd: () -> Unit) {
     }
     val source = file ?: return
     val player = remember(source) {
+        // A motion photo plays silently, like in the camera: no sound track and no audio focus, so
+        // music playing in another app keeps playing.
         ExoPlayer.Builder(context)
-            .setAudioAttributes(
-                AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MOVIE).build(),
-                true,
-            )
             .build()
             .apply {
+                trackSelectionParameters = trackSelectionParameters.buildUpon()
+                    .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, true)
+                    .build()
+                volume = 0f
                 setMediaItem(MediaItem.fromUri(Uri.fromFile(source)))
                 prepare()
                 playWhenReady = true
