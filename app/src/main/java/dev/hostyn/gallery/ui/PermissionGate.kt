@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+
 package dev.hostyn.gallery.ui
 
 import android.Manifest
@@ -19,10 +21,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PhotoLibrary
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.toShape
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -122,13 +127,13 @@ private fun PermissionScreen(onAllow: () -> Unit) {
         Box(Modifier.fillMaxSize().safeDrawingPadding().padding(32.dp), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                 Box(
-                    Modifier.size(112.dp).background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
+                    Modifier.size(128.dp).background(MaterialTheme.colorScheme.primaryContainer, MaterialShapes.Cookie12Sided.toShape()),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(Icons.Rounded.PhotoLibrary, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(52.dp))
                 }
                 Spacer(Modifier.height(28.dp))
-                Text(stringResource(R.string.permission_title), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+                Text(stringResource(R.string.permission_title), style = MaterialTheme.typography.headlineSmallEmphasized, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(12.dp))
                 Text(
                     stringResource(R.string.permission_body),
@@ -137,7 +142,13 @@ private fun PermissionScreen(onAllow: () -> Unit) {
                     textAlign = TextAlign.Center,
                 )
                 Spacer(Modifier.height(32.dp))
-                Button(onClick = onAllow) { Text(stringResource(R.string.allow_access)) }
+                val height = ButtonDefaults.MediumContainerHeight
+                Button(
+                    onClick = onAllow,
+                    shapes = ButtonDefaults.shapesFor(height),
+                    contentPadding = ButtonDefaults.contentPaddingFor(height),
+                    modifier = Modifier.heightIn(height),
+                ) { Text(stringResource(R.string.allow_access), style = ButtonDefaults.textStyleFor(height)) }
             }
         }
     }

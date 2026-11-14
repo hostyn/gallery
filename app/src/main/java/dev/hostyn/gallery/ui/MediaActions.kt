@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+
 package dev.hostyn.gallery.ui
 
 import android.app.PendingIntent
@@ -15,6 +17,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -249,12 +252,15 @@ fun rememberMediaActions(snackbar: SnackbarHostState): MediaActions {
             title = { Text(pluralStringResource(R.plurals.delete_forever_title, pending.count, pending.count)) },
             text = { Text(stringResource(R.string.delete_forever_body)) },
             confirmButton = {
-                TextButton(onClick = {
-                    actions.confirm = null
-                    pending.run()
-                }) { Text(stringResource(R.string.delete)) }
+                TextButton(
+                    onClick = {
+                        actions.confirm = null
+                        pending.run()
+                    },
+                    shapes = ButtonDefaults.shapes(),
+                ) { Text(stringResource(R.string.delete)) }
             },
-            dismissButton = { TextButton(onClick = { actions.confirm = null }) { Text(stringResource(R.string.cancel)) } },
+            dismissButton = { TextButton(onClick = { actions.confirm = null }, shapes = ButtonDefaults.shapes()) { Text(stringResource(R.string.cancel)) } },
         )
     }
     return actions

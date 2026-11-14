@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+
 package dev.hostyn.gallery.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
@@ -58,7 +60,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import dev.hostyn.gallery.GalleryApp
@@ -308,7 +309,7 @@ private fun SectionHeader(label: String, selection: Boolean?, onToggle: () -> Un
             .then(if (selection != null) Modifier.clickable(onClick = onToggle) else Modifier)
             .padding(start = 16.dp, end = 12.dp, top = 20.dp, bottom = 10.dp),
     ) {
-        Text(label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+        Text(label, style = MaterialTheme.typography.titleSmallEmphasized, modifier = Modifier.weight(1f))
         if (selection != null) {
             Icon(
                 if (selection) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked,
@@ -360,13 +361,13 @@ private fun BoxScope.FastScroller(state: LazyGridState, labelAt: (Int) -> Long?,
                     val ms = labelAt((y / track * scrollable).roundToInt())
                     if (ms != null) {
                         Surface(
-                            shape = RoundedCornerShape(24.dp),
+                            shape = MaterialTheme.shapes.largeIncreased,
                             color = MaterialTheme.colorScheme.secondaryContainer,
                             shadowElevation = 2.dp,
                         ) {
                             Text(
                                 monthLabel(ms),
-                                style = MaterialTheme.typography.titleSmall,
+                                style = MaterialTheme.typography.titleMediumEmphasized,
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                             )
                         }

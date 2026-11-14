@@ -81,6 +81,11 @@
         <item quantity="many">¿Eliminar %d elementos definitivamente?</item>
         <item quantity="other">¿Eliminar %d elementos definitivamente?</item>
     </plurals>
+    <plurals name="item_count">
+        <item quantity="one">%d elemento</item>
+        <item quantity="many">%d elementos</item>
+        <item quantity="other">%d elementos</item>
+    </plurals>
     <plurals name="days_left">
         <item quantity="one">%d día</item>
         <item quantity="many">%d días</item>

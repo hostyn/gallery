@@ -1,6 +1,6 @@
 # Gallery
 
-A simple photo and video gallery for Android, built with Kotlin and Jetpack Compose (Material 3 / Material You).
+A simple photo and video gallery for Android, built with Kotlin and Jetpack Compose (Material 3 Expressive / Material You).
 
 It shows the photos and videos already on your phone, grouped by day, and lets you view, share, favorite and delete them. It has **no internet permission**: your photos never leave the device unless you share them.
 
@@ -28,10 +28,10 @@ It shows the photos and videos already on your phone, grouped by day, and lets y
 - Optional "Skip confirmations" (Android 12+): with the *Media management* permission, trashing and favoriting happen at once, with an Undo button, instead of a system dialog each time.
 
 ### Viewer
-- Photos grow from their thumbnail when you open them. Swipe between photos, pinch or double-tap to zoom, swipe down to close, swipe up for details.
+- Photos grow from their thumbnail when you open them. Swipe between photos, pinch or double-tap to zoom, swipe down to close, swipe up for details: they come up from the bottom and push the photo up once they reach it.
 - Tap to hide the controls and see the photo full screen.
 - Videos play inline, with a seek bar.
-- Motion photos (Google and Samsung), marked in the grid: tap the motion button or long-press the photo to play its video.
+- Motion photos (Google and Samsung), marked in the grid: tap the motion button or long-press the photo to play its video, silently, so your music keeps playing.
 - Ultra HDR photos show with their full brightness on HDR screens (Android 14+).
 - Share, edit (with any editor app), favorite, delete, use as wallpaper or contact photo, open with another app.
 - Details: date, size, resolution, folder, camera and settings (aperture, exposure, ISO, focal length) and location, with a link to open it in your maps app.
@@ -61,7 +61,7 @@ EC:D6:BD:FC:52:58:65:A9:B5:C3:00:A7:60:5F:9F:E3:B6:B7:70:F2:84:50:16:C6:63:8D:06
 Requirements: JDK 17 and the Android SDK.
 
 ```bash
-./gradlew installDebug         # build and install a debug build on a connected device
+./gradlew installDebug         # build and install a debug build ("Gallery dev", next to the released app)
 ./gradlew testDebugUnitTest    # unit tests (date grouping, albums, photo details, motion photo and HDR detection)
 ./gradlew assembleRelease      # unsigned release build, minified with R8
 ```
@@ -70,7 +70,7 @@ To make a signed release, run `scripts/release.sh`. It builds the release, signs
 
 ## Tech stack
 
-- Kotlin, Jetpack Compose, Material 3, Navigation Compose
+- Kotlin, Jetpack Compose, Material 3 Expressive, Navigation Compose
 - `MediaStore` for the library, trash and favorites
 - [Coil](https://coil-kt.github.io/coil/) for images, with the system's own thumbnails
 - [Telephoto](https://github.com/saket/telephoto) for zooming
@@ -86,7 +86,7 @@ app/src/main/java/dev/hostyn/gallery/
 └── ui/
     ├── photos/      Photos grid, album and trash screens
     ├── albums/      Albums list
-    ├── viewer/      Photo and video viewer, details sheet
+    ├── viewer/      Photo and video viewer, details panel
     ├── components/  Grid, cells, date labels, shared bits
     └── settings/    Settings
 ```
